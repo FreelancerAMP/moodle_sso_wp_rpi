@@ -27,5 +27,5 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->component = 'auth_sso_wp_rpi';
 $plugin->release = '0.1.0';
 $plugin->version = 2022030200;
-$plugin->requires = 2021051700;
+$plugin->requires = 2014051200;
 $plugin->maturity = MATURITY_ALPHA;
