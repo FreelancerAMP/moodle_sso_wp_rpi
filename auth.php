@@ -18,7 +18,7 @@
  * Authentication class for sso_wp_rpi is defined here.
  *
  * @package     auth_sso_wp_rpi
- * @copyright   2022 rpi-virtuell 
+ * @copyright   2022 rpi-virtuell
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -55,6 +55,11 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base {
     public function user_login($username, $password) {
         global $CFG, $DB;
 
+		$c = new curl();
+		if($c->post()){
+			$response = $c->getResponse();
+		}
+
         // Validate the login by using the Moodle user table.
         // Remove if a different authentication method is desired.
         $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
@@ -64,6 +69,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base {
             return false;
         }
 
+		//return true||false
         return validate_internal_user_password($user, $password);
     }
 
