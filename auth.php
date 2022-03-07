@@ -57,6 +57,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
     public function user_login($username, $password)
     {
         global $CFG, $DB;
+        define('KONTO_SERVER', 'https://test.rpi-virtuell.de');
         if (!defined('KONTO_SERVER')) {
             if (getenv('KONTO_SERVER'))
                 define('KONTO_SERVER', getenv('KONTO_SERVER'));
@@ -64,46 +65,74 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         $url = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
 
         $c = new curl;
-        if ($c->post($url, array(
-            'username' => $username,
-            'password' => $password,
-            'origin_url' => home_url()
-        ))) {
-            $response = $c->getResponse();
 
-            if($response['success']){
-                if ($this->user_exists($response['profile']['user_login'])){
-                    return true;
-                }else{
+        $endpoint = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
+        $home_url = 'https://' . $_SERVER["SERVER_NAME"];
+        $postdata = json_encode('{
+	                                    "username"	: "' . $username . '",
+                                        "password"	: "' . $password . '",
+                                        "origin"	: "' . $home_url . '"
+                                        }');
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        $response = curl_exec($ch);
+        curl_close($ch);
 
-                }
-            }
+        $responseData = json_decode($response, true);
 
-            // TODO: token zwischenspeichern?
-
-
-
+        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
+        if (!$user) {
+            $user = $this->create_demostudent_account($responseData['profile'], $password);
         }
 
-        // Validate the login by using the Moodle user table.
-        // Remove if a different authentication method is desired.
-        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
+        require_once($CFG->dirroot . '/user/profile/lib.php');
+        profile_load_data($user);
+        $sql = "SELECT * from {$CFG->prefix}company where name like '%virtuell%'";
+
+        if (empty($user->institution)) {
+            $user->department = "relilab";
+            $user->institution = "relilab";
+        }
+//and then save it with:
+        profile_save_data($user);
+
+        //var_dump(validate_internal_user_password($user, $password));
 
         // User does not exist.
         if (!$user) {
             return false;
         }
 
-        //return true||false
-        return validate_internal_user_password($user, $password);
+//return true||false
+        return true;
     }
+
+    function create_demostudent_account($user, $password)
+    {
+        var_dump($user['user_login']);
+        global $USER, $DB;
+        $demostudentuser = create_user_record($user['user_login'], $password, $this->authtype);
+        if ($demostudentuser) {
+            $demostudentuser->firstname = $user['first_name'];
+            $demostudentuser->lastname = $user['last_name'];
+            $demostudentuser->email = $user['user_email'];
+            $demostudentuser->password = $password;
+            $DB->update_record('user', $demostudentuser);
+        }
+        return $demostudentuser;
+    }
+
 
     /**
      * Returns true if this authentication plugin can change the user's password.
      *
      * @return bool
      */
-    public function can_change_password()
+    public
+    function can_change_password()
     {
         return false;
     }
@@ -113,7 +142,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool
      */
-    public function can_edit_profile()
+    public
+    function can_edit_profile()
     {
         return true;
     }
@@ -125,7 +155,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool
      */
-    public function is_internal()
+    public
+    function is_internal()
     {
         return false;
     }
@@ -135,7 +166,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool True means password hash stored in user table, false means flag 'not_cached' stored there instead.
      */
-    public function prevent_local_passwords()
+    public
+    function prevent_local_passwords()
     {
         return true;
     }
@@ -147,7 +179,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool True means automatically copy data from ext to user table.
      */
-    public function is_synchronised_with_external()
+    public
+    function is_synchronised_with_external()
     {
         return false;
     }
@@ -157,7 +190,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool.
      */
-    public function can_reset_password()
+    public
+    function can_reset_password()
     {
         return true;
     }
@@ -167,7 +201,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool
      */
-    public function can_signup()
+    public
+    function can_signup()
     {
         return true;
     }
@@ -177,7 +212,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool
      */
-    public function can_confirm()
+    public
+    function can_confirm()
     {
         return false;
     }
@@ -191,7 +227,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      *
      * @return bool
      */
-    public function can_be_manually_set()
+    public
+    function can_be_manually_set()
     {
         return true;
     }
@@ -206,7 +243,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      * @param object $err
      * @param array $userfields
      */
-    public function config_form($config, $err, $userfields)
+    public
+    function config_form($config, $err, $userfields)
     {
 
         // The form file can be included here.
@@ -221,7 +259,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      * @param stdClass $config Object with submitted configuration settings (without system magic quotes).
      * @return bool True if the configuration was processed successfully.
      */
-    public function process_config($config)
+    public
+    function process_config($config)
     {
         return true;
     }
