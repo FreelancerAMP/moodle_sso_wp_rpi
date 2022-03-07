@@ -82,25 +82,26 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         curl_close($ch);
 
         $responseData = json_decode($response, true);
+        if (isset($responseData['success']) && $responseData['success']) {
 
-        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
-        if (!$user) {
-            $user = $this->create_demostudent_account($responseData['profile'], $password);
+            $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
+            if (!$user) {
+                $user = $this->create_demostudent_account($responseData['profile'], $password);
+
+                require_once($CFG->dirroot . '/user/profile/lib.php');
+                profile_load_data($user);
+                $sql = "SELECT * from {$CFG->prefix}company where name like '%virtuell%'";
+
+                $user->department = "relilab";
+                $user->institution = "relilab";
+              //  profile_save_data($user);
+            }
+            //var_dump(validate_internal_user_password($user, $password));
+
+        } else {
+            return false;
+
         }
-
-        require_once($CFG->dirroot . '/user/profile/lib.php');
-        profile_load_data($user);
-        $sql = "SELECT * from {$CFG->prefix}company where name like '%virtuell%'";
-
-        if (empty($user->institution)) {
-            $user->department = "relilab";
-            $user->institution = "relilab";
-        }
-//and then save it with:
-        profile_save_data($user);
-
-        //var_dump(validate_internal_user_password($user, $password));
-
         // User does not exist.
         if (!$user) {
             return false;
