@@ -23,7 +23,7 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
+global $CFG;
 require_once($CFG->libdir . '/authlib.php');
 
 // For further information about authentication plugins please read
@@ -47,19 +47,30 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         $this->authtype = 'sso_wp_rpi';
     }
 
-	function user_authenticated_hook(&$user, $username, $password) {
-		//override if needed
-		global $CFG;
-		if($this->wp_user_profile){
-			$user = $this->create_demostudent_account($this->wp_user_profile, $password);
+	public function user_authenticated_hook(&$user, $username, $password) {
+
+		global $DB;
+		if($wp_profile = $_SESSION['wp_sso_rpi_profile']){
+			//userprofile ergänzen
+			if ($user) {
+				$user->firstname = $wp_profile['first_name'];
+				$user->lastname = $wp_profile['last_name'];
+				$user->email = $wp_profile['user_email'];
+				$DB->update_record('user', $user);
+
+				//Organisation setzen
+				$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
+				if($comprec){
+					$company = new company($comprec->id);
+					$company->assign_user_to_company($user->id);
+				}
+
+			}
 		}
 
-		require_once($CFG->dirroot . '/user/profile/lib.php');
-		profile_load_data($user);
-		$sql = "SELECT * from {$CFG->prefix}company where name like '%virtuell%'";
-		$user->department = "relilab";
-		$user->institution = "relilab";
-		profile_save_data($user);
+		//$user = $this->create_demostudent_account($user, $password);
+
+
 	}
 
     /**
@@ -101,7 +112,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         if (isset($responseData['success']) && $responseData['success']) {
 	        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
 			if (!$user) {
-				$this->wp_user_profile = $responseData['profile'];
+				$_SESSION['wp_sso_rpi_profile'] = $responseData['profile'];
             }
 	        return true;
         } else {
@@ -110,21 +121,24 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         }
 
     }
-
-    function create_demostudent_account($demostudentuser, $password)
+/*
+    function create_demostudent_account($user, $password)
     {
 		global $DB;
-		$user = $this->wp_user_profile;
-        //$demostudentuser = create_user_record($user['user_login'], $password, $this->authtype);
-        if ($demostudentuser) {
-            $demostudentuser->firstname = $user['first_name'];
-            $demostudentuser->lastname = $user['last_name'];
-            $demostudentuser->email = $user['user_email'];
-            $demostudentuser->password = $password;
-            $DB->update_record('user', $demostudentuser);
-        }
-        return $demostudentuser;
-    }
+		if($user = $_SESSION['wp_sso_rpi_profile']){
+			if ($user) {
+				$user->firstname = $user['first_name'];
+				$user->lastname = $user['last_name'];
+				$user->email = $user['user_email'];
+				$DB->update_record('user', $user);
+				$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
+				$company = new company($comprec->id);
+				$company->assign_user_to_company($user->id);
+			}
+		}
+
+        return $user;
+    }*/
 
 
     /**
