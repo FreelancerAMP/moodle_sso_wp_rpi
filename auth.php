@@ -38,7 +38,6 @@ require_once($CFG->libdir . '/authlib.php');
 class auth_plugin_sso_wp_rpi extends auth_plugin_base
 {
 
-	private $wp_user_profile = null;
     /**
      * Set the properties of the instance.
      */
@@ -49,8 +48,9 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 
 	public function user_authenticated_hook(&$user, $username, $password) {
 
-		global $DB;
-		if($wp_profile = $_SESSION['wp_sso_rpi_profile']){
+		global $DB,$SESSION;
+
+		if($wp_profile = $SESSION->wp_sso_rpi_profile){
 			//userprofile ergänzen
 			if ($user) {
 				$user->firstname = $wp_profile['first_name'];
@@ -68,9 +68,6 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 			}
 		}
 
-		//$user = $this->create_demostudent_account($user, $password);
-
-
 	}
 
     /**
@@ -83,7 +80,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      */
     public function user_login($username, $password)
     {
-        global $CFG, $DB;
+        global $CFG, $DB,$SESSION;
         define('KONTO_SERVER', 'https://test.rpi-virtuell.de');
         if (!defined('KONTO_SERVER')) {
             if (getenv('KONTO_SERVER'))
@@ -112,7 +109,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         if (isset($responseData['success']) && $responseData['success']) {
 	        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
 			if (!$user) {
-				$_SESSION['wp_sso_rpi_profile'] = $responseData['profile'];
+				$SESSION->wp_sso_rpi_profile = $responseData['profile'];
             }
 	        return true;
         } else {
@@ -121,25 +118,6 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         }
 
     }
-/*
-    function create_demostudent_account($user, $password)
-    {
-		global $DB;
-		if($user = $_SESSION['wp_sso_rpi_profile']){
-			if ($user) {
-				$user->firstname = $user['first_name'];
-				$user->lastname = $user['last_name'];
-				$user->email = $user['user_email'];
-				$DB->update_record('user', $user);
-				$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
-				$company = new company($comprec->id);
-				$company->assign_user_to_company($user->id);
-			}
-		}
-
-        return $user;
-    }*/
-
 
     /**
      * Returns true if this authentication plugin can change the user's password.
