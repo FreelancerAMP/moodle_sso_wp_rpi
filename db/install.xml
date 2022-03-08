@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="auth/sso_wp_rpi/db" VERSION="20220308" COMMENT="XMLDB file for Moodle auth/sso_wp_rpi"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+    <TABLES>
+        <TABLE NAME="sso_wp_rpi_last_login" COMMENT="Login Attempts of specific ip/username to the Server">
+            <FIELDS>
+                <FIELD NAME="hash" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false"/>
+                <FIELD NAME="last_login" TYPE="bigint" LENGTH="20" NOTNULL="false" SEQUENCE="false"/>
+                <FIELD NAME="ip" TYPE="varchar" LENGTH="30" NOTNULL="false" DEFAULT="" SEQUENCE="false"/>
+                <FIELD NAME="username" TYPE="varchar" LENGTH="36" NOTNULL="false" SEQUENCE="false"/>
+            </FIELDS>
+            <INDEXES>
+                <INDEX NAME="hash" UNIQUE="false" FIELDS="hash"/>
+            </INDEXES>
+        </TABLE>
+    </TABLES>
+</XMLDB>
