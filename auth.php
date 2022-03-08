@@ -38,6 +38,7 @@ require_once($CFG->libdir . '/authlib.php');
 class auth_plugin_sso_wp_rpi extends auth_plugin_base
 {
 
+	private $wp_user_profile = null;
     /**
      * Set the properties of the instance.
      */
@@ -45,6 +46,21 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
     {
         $this->authtype = 'sso_wp_rpi';
     }
+
+	function user_authenticated_hook(&$user, $username, $password) {
+		//override if needed
+		global $CFG;
+		if($this->wp_user_profile){
+			$user = $this->create_demostudent_account($this->wp_user_profile, $password);
+		}
+
+		require_once($CFG->dirroot . '/user/profile/lib.php');
+		profile_load_data($user);
+		$sql = "SELECT * from {$CFG->prefix}company where name like '%virtuell%'";
+		$user->department = "relilab";
+		$user->institution = "relilab";
+		profile_save_data($user);
+	}
 
     /**
      * Returns true if the username and password work and false if they are
@@ -83,39 +99,23 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 
         $responseData = json_decode($response, true);
         if (isset($responseData['success']) && $responseData['success']) {
-
-            $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
-            if (!$user) {
-                $user = $this->create_demostudent_account($responseData['profile'], $password);
-
-                require_once($CFG->dirroot . '/user/profile/lib.php');
-                profile_load_data($user);
-                $sql = "SELECT * from {$CFG->prefix}company where name like '%virtuell%'";
-
-                $user->department = "relilab";
-                $user->institution = "relilab";
-              //  profile_save_data($user);
+	        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
+			if (!$user) {
+				$this->wp_user_profile = $responseData['profile'];
             }
-            //var_dump(validate_internal_user_password($user, $password));
-
+	        return true;
         } else {
             return false;
 
         }
-        // User does not exist.
-        if (!$user) {
-            return false;
-        }
 
-//return true||false
-        return true;
     }
 
-    function create_demostudent_account($user, $password)
+    function create_demostudent_account($demostudentuser, $password)
     {
-        var_dump($user['user_login']);
-        global $USER, $DB;
-        $demostudentuser = create_user_record($user['user_login'], $password, $this->authtype);
+		global $DB;
+		$user = $this->wp_user_profile;
+        //$demostudentuser = create_user_record($user['user_login'], $password, $this->authtype);
         if ($demostudentuser) {
             $demostudentuser->firstname = $user['first_name'];
             $demostudentuser->lastname = $user['last_name'];
