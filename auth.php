@@ -90,6 +90,13 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
     public function user_login($username, $password)
     {
         global $CFG, $DB,$SESSION;
+
+		//check failed logins
+	    if(!$this->check_login($username)){
+			print_r('Too many logins');
+			return false;
+	    };
+
         define('KONTO_SERVER', 'https://test.rpi-virtuell.de');
         if (!defined('KONTO_SERVER')) {
             if (getenv('KONTO_SERVER'))
@@ -125,11 +132,49 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
             }
 	        return true;
         } else {
+	        $this->add_failed_login();
             return false;
 
         }
 
     }
+
+	/**
+	 * check bruce force attac
+	 */
+	protected function check_login($username){
+		global $DB;
+
+		$this->delete_failed_logins();
+
+		$result= $DB->get_record('sso_wp_rpi_last_login', array('hash'=>md5($username, $_SERVER['REMOTE_ADDR'])));
+
+		if(count($result>3)){
+			return false;
+		}
+		return true;
+	}
+	/**
+	 * check bruce force attac
+	 */
+	protected function add_failed_login($username){
+		global $DB;
+
+		$DB->insert_record('sso_wp_rpi_last_login', array(
+			'hash'=>md5($username, $_SERVER['REMOTE_ADDR']),
+			'ip'=>$_SERVER['REMOTE_ADDR'],
+			'username'=>$username,
+			'last_login'=>time()
+		),false);
+
+	}
+	/**
+	 * delete laste login
+	 */
+	protected function delete_failed_logins(){
+		global $DB;
+		$DB->delete_records_select('sso_wp_rpi_last_login',"last_login < ".time()-(60*20) );
+	}
 
     /**
      * Returns true if this authentication plugin can change the user's password.
@@ -269,4 +314,5 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
     {
         return true;
     }
+
 }
