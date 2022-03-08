@@ -58,12 +58,21 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 				$user->email = $wp_profile['user_email'];
 				$DB->update_record('user', $user);
 
-				//Organisation setzen
-				$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
-				if($comprec){
-					$company = new company($comprec->id);
-					$company->assign_user_to_company($user->id);
+				//iomad installed?
+				if(class_exists('company')){
+					$company = company::by_userid($user->id);
+					if(!$company){
+						//assign user to organisation
+						//@TODO get company from $_GET param
+						$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
+						if($comprec){
+							$company = new company($comprec->id);
+							$company->assign_user_to_company($user->id);
+						}
+					}
+
 				}
+
 
 			}
 		}
