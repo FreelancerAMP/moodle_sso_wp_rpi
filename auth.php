@@ -63,7 +63,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 					$company = company::by_userid($user->id);
 					if(!$company){
 						//assign user to organisation
-						//@TODO get company from $_GET param
+						//TODO: get company from $_GET param
 						$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
 						if($comprec){
 							$company = new company($comprec->id);
@@ -99,6 +99,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 
         $c = new curl;
 
+        // REST Call via CURL to check user credentials with remote konto server
         $endpoint = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
         $home_url = 'https://' . $_SERVER["SERVER_NAME"];
         $postdata = json_encode('{
@@ -115,9 +116,11 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         curl_close($ch);
 
         $responseData = json_decode($response, true);
+        // Check if response was a success and wether user is already known by this server
         if (isset($responseData['success']) && $responseData['success']) {
 	        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
 			if (!$user) {
+                // SET Session var to access it later when creating new user account
 				$SESSION->wp_sso_rpi_profile = $responseData['profile'];
             }
 	        return true;
