@@ -19,7 +19,7 @@
  *
  * @package     auth_sso_wp_rpi
  * @category    string
- * @copyright   2022 rpi-virtuell 
+ * @copyright   2022 rpi-virtuell
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
