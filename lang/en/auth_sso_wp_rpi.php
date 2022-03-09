@@ -27,3 +27,4 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['auth_description'] = 'Login via wordpress KONTO_SERVER';
 $string['pluginname'] = 'Authentifikation on Wordpress User';
+$string['login_attempt_error'] = 'Maximum amount of Login Attempts reached! Please wait 20 minutes and try again.';

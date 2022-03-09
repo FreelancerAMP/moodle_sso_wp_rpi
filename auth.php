@@ -93,8 +93,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 
 		//check failed logins
 	    if(!$this->check_login($username)){
-		    \core\notification::error('Too many logins');
-			print_r('Too many logins');
+		    \core\notification::error(get_string('login_attempt_error','auth_sso_wp_rpi'));
+
 			return false;
 	    };
 
