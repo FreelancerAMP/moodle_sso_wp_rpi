@@ -132,7 +132,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
             }
 	        return true;
         } else {
-	        $this->add_failed_login();
+	        $this->add_failed_login($username);
             return false;
 
         }
@@ -145,11 +145,11 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 	protected function check_login($username){
 		global $DB;
 
-		$this->delete_failed_logins();
+		//$this->delete_failed_logins();
 
-		$result= $DB->get_record('sso_wp_rpi_last_login', array('hash'=>md5($username, $_SERVER['REMOTE_ADDR'])));
+		$result= $DB->get_records('sso_wp_rpi_last_login', array('hash'=>md5($username.$_SERVER['REMOTE_ADDR'])));
 
-		if(count($result>3)){
+		if(count($result)>3){
 			return false;
 		}
 		return true;
@@ -161,7 +161,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 		global $DB;
 
 		$DB->insert_record('sso_wp_rpi_last_login', array(
-			'hash'=>md5($username, $_SERVER['REMOTE_ADDR']),
+			'hash'=>md5($username.$_SERVER['REMOTE_ADDR']),
 			'ip'=>$_SERVER['REMOTE_ADDR'],
 			'username'=>$username,
 			'last_login'=>time()
