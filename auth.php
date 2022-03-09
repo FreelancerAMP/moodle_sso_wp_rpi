@@ -145,7 +145,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 	protected function check_login($username){
 		global $DB;
 
-		//$this->delete_failed_logins();
+		$this->delete_failed_logins();
 
 		$result= $DB->get_records('sso_wp_rpi_last_login', array('hash'=>md5($username.$_SERVER['REMOTE_ADDR'])));
 
