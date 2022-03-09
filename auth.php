@@ -93,6 +93,7 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 
 		//check failed logins
 	    if(!$this->check_login($username)){
+		    \core\notification::error('Too many logins');
 			print_r('Too many logins');
 			return false;
 	    };
@@ -173,7 +174,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 	 */
 	protected function delete_failed_logins(){
 		global $DB;
-		$DB->delete_records_select('sso_wp_rpi_last_login',"last_login < ".time()-(60*20) );
+		$sql ="DELETE FROM {sso_wp_rpi_last_login} WHERE last_login < "  . (time()-(60*20));
+		$DB->get_record_sql($sql );
 	}
 
     /**
