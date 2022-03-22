@@ -98,23 +98,20 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 			return false;
 	    };
 
-        define('KONTO_SERVER', 'https://test.rpi-virtuell.de');
+        //define('KONTO_SERVER', 'https://test.rpi-virtuell.de');
         if (!defined('KONTO_SERVER')) {
             if (getenv('KONTO_SERVER'))
                 define('KONTO_SERVER', getenv('KONTO_SERVER'));
         }
         $url = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
 
+
         $c = new curl;
 
         // REST Call via CURL to check user credentials with remote konto server
         $endpoint = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
         $home_url = 'https://' . $_SERVER["SERVER_NAME"];
-        $postdata = json_encode('{
-	                                    "username"	: "' . $username . '",
-                                        "password"	: "' . $password . '",
-                                        "origin"	: "' . $home_url . '"
-                                        }');
+        $postdata = '{"username": "' . $username . '","password": "' . $password . '","origin": "' . $home_url . '"}';
         $ch = curl_init($endpoint);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
@@ -124,7 +121,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         curl_close($ch);
 
         $responseData = json_decode($response, true);
-        // Check if response was a success and wether user is already known by this server
+
+		// Check if response was a success and wether user is already known by this server
         if (isset($responseData['success']) && $responseData['success']) {
 	        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
 			if (!$user) {
