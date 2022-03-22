@@ -46,38 +46,39 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         $this->authtype = 'sso_wp_rpi';
     }
 
-	public function user_authenticated_hook(&$user, $username, $password) {
+    public function user_authenticated_hook(&$user, $username, $password)
+    {
 
-		global $DB,$SESSION;
+        global $DB, $SESSION;
 
-		if($wp_profile = $SESSION->wp_sso_rpi_profile){
-			//userprofile ergänzen
-			if ($user) {
-				$user->firstname = $wp_profile['first_name'];
-				$user->lastname = $wp_profile['last_name'];
-				$user->email = $wp_profile['user_email'];
-				$DB->update_record('user', $user);
+        if ($wp_profile = $SESSION->wp_sso_rpi_profile) {
+            //userprofile ergänzen
+            if ($user) {
+                $user->firstname = $wp_profile['first_name'];
+                $user->lastname = $wp_profile['last_name'];
+                $user->email = $wp_profile['user_email'];
+                $DB->update_record('user', $user);
 
-				//iomad installed?
-				if(class_exists('company')){
-					$company = company::by_userid($user->id);
-					if(!$company){
-						//assign user to organisation
-						//TODO: get company from $_GET param
-						$comprec= $DB->get_record('company', array('shortname'=>'relilab'));
-						if($comprec){
-							$company = new company($comprec->id);
-							$company->assign_user_to_company($user->id);
-						}
-					}
+                //iomad installed?
+                if (class_exists('company')) {
+                    $company = company::by_userid($user->id);
+                    if (!$company) {
+                        //assign user to organisation
+                        //TODO: get company from $_GET param
+                        $comprec = $DB->get_record('company', array('shortname' => 'relilab'));
+                        if ($comprec) {
+                            $company = new company($comprec->id);
+                            $company->assign_user_to_company($user->id);
+                        }
+                    }
 
-				}
+                }
 
 
-			}
-		}
+            }
+        }
 
-	}
+    }
 
     /**
      * Returns true if the username and password work and false if they are
@@ -89,14 +90,14 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
      */
     public function user_login($username, $password)
     {
-        global $CFG, $DB,$SESSION;
+        global $CFG, $DB, $SESSION;
 
-		//check failed logins
-	    if(!$this->check_login($username)){
-		    \core\notification::error(get_string('login_attempt_error','auth_sso_wp_rpi'));
+        //check failed logins
+        if (!$this->check_login($username)) {
+            \core\notification::error(get_string('login_attempt_error', 'auth_sso_wp_rpi'));
 
-			return false;
-	    };
+            return false;
+        };
 
         //define('KONTO_SERVER', 'https://test.rpi-virtuell.de');
         if (!defined('KONTO_SERVER')) {
@@ -122,59 +123,64 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
 
         $responseData = json_decode($response, true);
 
-		// Check if response was a success and wether user is already known by this server
+        // Check if response was a success and wether user is already known by this server
         if (isset($responseData['success']) && $responseData['success']) {
-	        $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
-			if (!$user) {
+            $user = $DB->get_record('user', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id));
+            if (!$user) {
                 // SET Session var to access it later when creating new user account
-				$SESSION->wp_sso_rpi_profile = $responseData['profile'];
+                $SESSION->wp_sso_rpi_profile = $responseData['profile'];
             }
-	        return true;
+            return true;
         } else {
-	        $this->add_failed_login($username);
+            $this->add_failed_login($username);
             return false;
 
         }
 
     }
 
-	/**
-	 * check bruce force attac
-	 */
-	protected function check_login($username){
-		global $DB;
+    /**
+     * check bruce force attac
+     */
+    protected function check_login($username)
+    {
+        global $DB;
 
-		$this->delete_failed_logins();
+        $this->delete_failed_logins();
 
-		$result= $DB->get_records('sso_wp_rpi_last_login', array('hash'=>md5($username.$_SERVER['REMOTE_ADDR'])));
+        $result = $DB->get_records('sso_wp_rpi_last_login', array('hash' => md5($username . $_SERVER['REMOTE_ADDR'])));
 
-		if(count($result)>3){
-			return false;
-		}
-		return true;
-	}
-	/**
-	 * check bruce force attac
-	 */
-	protected function add_failed_login($username){
-		global $DB;
+        if (count($result) > 3) {
+            return false;
+        }
+        return true;
+    }
 
-		$DB->insert_record('sso_wp_rpi_last_login', array(
-			'hash'=>md5($username.$_SERVER['REMOTE_ADDR']),
-			'ip'=>$_SERVER['REMOTE_ADDR'],
-			'username'=>$username,
-			'last_login'=>time()
-		),false);
+    /**
+     * check bruce force attac
+     */
+    protected function add_failed_login($username)
+    {
+        global $DB;
 
-	}
-	/**
-	 * delete laste login
-	 */
-	protected function delete_failed_logins(){
-		global $DB;
-		$sql ="DELETE FROM {sso_wp_rpi_last_login} WHERE last_login < "  . (time()-(60*20));
-		$DB->execute($sql);
-	}
+        $DB->insert_record('sso_wp_rpi_last_login', array(
+            'hash' => md5($username . $_SERVER['REMOTE_ADDR']),
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'username' => $username,
+            'last_login' => time()
+        ), false);
+
+    }
+
+    /**
+     * delete laste login
+     */
+    protected function delete_failed_logins()
+    {
+        global $DB;
+        $sql = "DELETE FROM {sso_wp_rpi_last_login} WHERE last_login < " . (time() - (60 * 20));
+        $DB->execute($sql);
+    }
 
     /**
      * Returns true if this authentication plugin can change the user's password.
