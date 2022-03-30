@@ -25,9 +25,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['auth_description'] = 'Login via wordpress KONTO_SERVER';
-$string['pluginname'] = 'Authentifikation on Wordpress User';
-$string['login_attempt_error'] = 'Maximum amount of Login Attempts reached! Please wait 20 minutes and try again.';
-$string['settings_heading'] = 'Settings Page to set possible companies to which the user can assign themselves on login';
-$string['settings_txt_input_name'] = 'Allowed company names';
-$string['settings_txt_input_desc'] = 'NOTICE: This input expects shortnames of the allowed companies to which the user can assign themselves. The shortnames should be seperated with commas only';
+
+$string['auth_description'] = 'Login über wordpress KONTO_SERVER';
+$string['pluginname'] = 'Authentifizierung eines Wordpress Nutzers';
+$string['login_attempt_error'] = 'Maximale Anzahl von Login-Versuchen erreicht! Bitte warten Sie 20 Minuten und versuchen Sie es erneut.';
+$string['settings_heading'] = 'Einstellungsseite zum Einstellen möglicher Unternehmen, zu denen sich der Benutzer bei der Anmeldung zuordnen kann';
+$string['settings_txt_input_name'] = 'Erlaubte Firmennamen';
+$string['settings_txt_input_desc'] = 'HINWEIS: Diese Feld erwartet die Kurznamen der erlaubten Firmen, denen sich der Benutzer zuordnen kann. Die Kurznamen sollten nur durch kommata getrennt werden';

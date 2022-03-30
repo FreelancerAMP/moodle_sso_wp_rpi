@@ -38,34 +38,46 @@ require_once($CFG->libdir . '/authlib.php');
 class auth_plugin_sso_wp_rpi extends auth_plugin_base
 {
 
+
     /**
      * Set the properties of the instance.
      */
     public function __construct()
     {
+        global $DB, $CFG;
+
         $this->authtype = 'sso_wp_rpi';
-    }
 
-    public function log($content)
-    {
-        global $CFG;
-        if (!is_string($content))
-            $content = json_encode($content);
-        file_put_contents($CFG->dataroot . '/debug.log', $content . "\n", FILE_APPEND);
+        if (isset($_GET['sso_wp_company'])) {
+            $company = $DB->get_record('company', array('shortname' => $_GET['sso_wp_company']));
+            if (is_string(get_config('auth_sso_wp_rpi', 'sso_company_txt_config')))
+            {
+                $allowed_companies = explode(',', get_config('auth_sso_wp_rpi', 'sso_company_txt_config'));
+            }
+            else
+            {
+                $allowed_companies = array('rpi');
+            }
+            if ($company && in_array($company->shortname, $allowed_companies)) {
+                redirect($CFG->wwwroot . "/login/index.php?id=" . $company->id . "&code=" . $company->shortname);
+            } else {
+                redirect($CFG->wwwroot . "/login/index.php");
+            }
+        }
     }
-
+//// Used for Debugging
+//    public function log($content)
+//    {
+//        global $CFG;
+//        if (!is_string($content))
+//            $content = json_encode($content);
+//        file_put_contents($CFG->dataroot . '/debug.log', $content . "\n", FILE_APPEND);
+//    }
 
     public function user_authenticated_hook(&$user, $username, $password)
     {
 
-        $allowed_companies = array(
-            'rpi-virtuell',
-            'relilab',
-            'ci',
-            'dea');
-
         global $CFG, $DB, $SESSION;
-        $this->log($SESSION->company);
         if ($wp_profile = $SESSION->wp_sso_rpi_profile) {
             //userprofile ergänzen
             if ($user) {
@@ -77,9 +89,8 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
                 if (class_exists('company')) {
                     $old_company = $DB->get_record('company_users', array('userid' => $user->id));
                     $old_company = new company($old_company->companyid);
-                    if (!empty($SESSION->company) ) {
-                        if ( in_array($SESSION->company->shortname, $allowed_companies) && $old_company->get_shortname() != $SESSION->company->shortname)
-                        {
+                    if (!empty($SESSION->company)) {
+                        if ($old_company->get_shortname() != $SESSION->company->shortname) {
                             $result = $old_company->unassign_user_from_company($user->id);
                             $company = new company($SESSION->company->id);
                             $result = $company->assign_user_to_company($user->id);
