@@ -26,8 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
-//    $ADMIN->add('auth_sso_wp_rpi', new admin_category('wp_sso_rpi_settings', new lang_string('pluginname', 'auth_sso_wp_rpi')));
-//    $settingspage = new admin_settingpage('ssosettings', 'ssosettings');
     if ($ADMIN->fulltree) {
 
 
@@ -38,21 +36,5 @@ if ($hassiteconfig) {
         $settings->add(new admin_setting_configtext('auth_sso_wp_rpi/sso_company_txt_config', get_string('settings_txt_input_name', 'auth_sso_wp_rpi'),
             get_string('settings_txt_input_desc', 'auth_sso_wp_rpi'), 'relilab,ci,rpi', PARAM_RAW, null));
 
-
-        $options = [
-            'rpi' => 'rpi-virtuell',
-            'relilab' => 'relilab',
-        ];
-
-        //settings->add(admin_setting_configselect('auth_sso_wp_rpi/organisationen', 'organisationen', 'Erlaubte Organistaionen', 'rpi', $options));
-
-//        $settingspage->add(new admin_setting_configcheckbox(
-//            'wp_sso_rpi/showinnavigation',
-//            new lang_string('showinnavigation', 'local_helloworld'),
-//            new lang_string('showinnavigation_desc', 'local_helloworld'),
-//            1
-//        ));
     }
-
-//    $ADMIN->add('auth_sso_wp_rpi', $settingspage);
 }

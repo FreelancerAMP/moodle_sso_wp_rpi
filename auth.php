@@ -131,9 +131,6 @@ class auth_plugin_sso_wp_rpi extends auth_plugin_base
         }
         $url = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
 
-
-        $c = new curl;
-
         // REST Call via CURL to check user credentials with remote konto server
         $endpoint = KONTO_SERVER . '/wp-json/sso/v1/check_credentials';
         $home_url = 'https://' . $_SERVER["SERVER_NAME"];
